@@ -22,6 +22,13 @@ class PeopleReader(metaclass=ABCMeta):
         pass
 
 
+class PeopleWriter(metaclass=ABCMeta):
+
+    @abstractmethod
+    def write(self, people: list):
+        pass
+
+
 class JSONPeopleReader(PeopleReader):
     def read(self) -> List[Ljud]:
         with open("input.json") as f:
@@ -49,6 +56,28 @@ class CSVPeopleReader(PeopleReader):
         return ljudi
 
 
+class CSVPeopleWriter(PeopleWriter):
+    def write(self, people: list):
+        normalni_ljudi = [
+            x.__dict__
+            for x in people
+        ]
+        with open("output.csv", "w") as outfile_csv:
+            writer = csv.DictWriter(outfile_csv, fieldnames=['ime', 'plata'])
+            writer.writeheader()
+            writer.writerows(normalni_ljudi)
+
+
+class JSONPeopleWriter(PeopleWriter):
+    def write(self, people: list):
+        normalni_ljudi = [
+            x.__dict__
+            for x in people
+        ]
+        with open("output.json", "w") as outfile_json:
+            outfile_json.write(json.dumps(normalni_ljudi))
+
+
 def get_reader(file_type: str) -> PeopleReader:
     if file_type == 'json':
         return JSONPeopleReader()
@@ -56,7 +85,14 @@ def get_reader(file_type: str) -> PeopleReader:
         return CSVPeopleReader()
 
 
-def uvecaj_platu(people):
+def get_writer(file_type: str) -> PeopleWriter:
+    if file_type == 'json':
+        return JSONPeopleWriter()
+    if file_type == 'csv':
+        return CSVPeopleWriter()
+
+
+def uvecaj_platu(people: list):
     for it in people:
         it.plata_gore(100)
 
@@ -69,19 +105,9 @@ def main(input_file_type: str, output_file_type: str):
 
     uvecaj_platu(people)
 
-    normalni_ljudi = [
-        x.__dict__
-        for x in people
-    ]
+    writer: PeopleWriter = get_writer(output_file_type)
 
-    # ovo isto onako odvojeno sa klasama
-    with open("output.json", "w") as outfile_json:
-        outfile_json.write(json.dumps(normalni_ljudi))
-
-    with open("output.csv", "w") as outfile_csv:
-        writer = csv.DictWriter(outfile_csv, fieldnames=['ime', 'plata'])
-        writer.writeheader()
-        writer.writerows(normalni_ljudi)
+    people: PeopleWriter = writer.write(people)
 
 
 if __name__ == '__main__':
